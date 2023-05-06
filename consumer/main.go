@@ -54,7 +54,7 @@ func consumeMessages(ctx context.Context, reader *kafka.Reader) {
 		default:
 		}
 
-		m, err := reader.ReadMessage(context.Background())
+		m, err := reader.ReadMessage(ctx)
 		if err != nil {
 			log.Fatalln(err)
 		}
