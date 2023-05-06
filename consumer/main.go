@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -25,11 +28,32 @@ func main() {
 	topic := "gophers_part_num_1"
 	groupID := "gophers_consumers_group_1"
 
+	chOsInterrupt := make(chan os.Signal, 1)
+	signal.Notify(chOsInterrupt, os.Interrupt, syscall.SIGTERM)
+
 	reader := getKafkaReader(kafkaURL, topic, groupID)
 	defer reader.Close()
 
-	fmt.Println("start consuming ... !!")
+	ctx, cancel := context.WithCancel(context.Background())
+	go consumeMessages(ctx, reader)
+
+	// listen for interrupt signal to gracefully shutdown the server
+	receivedSig := <-chOsInterrupt
+	fmt.Printf("signal [%s] received, killing everything ...", receivedSig)
+	cancel()
+}
+
+func consumeMessages(ctx context.Context, reader *kafka.Reader) {
+	fmt.Println("start consuming ...")
 	for {
+		// check context done
+		select {
+		case <-ctx.Done():
+			fmt.Println("closing consumer")
+			return
+		default:
+		}
+
 		m, err := reader.ReadMessage(context.Background())
 		if err != nil {
 			log.Fatalln(err)
