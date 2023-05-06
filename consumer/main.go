@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -19,6 +21,13 @@ func getKafkaReader(kafkaURL, topic, groupID string) *kafka.Reader {
 		Topic:    topic,
 		MinBytes: 10e3, // 10KB
 		MaxBytes: 10e6, // 10MB
+
+		MaxWait:         time.Duration(1) * time.Second,
+		ReadLagInterval: -1,
+		//CommitInterval:  time.Duration(commitInterval),
+		ErrorLogger: kafka.LoggerFunc(func(s string, i ...interface{}) {
+			log.Printf(" ==> kafka error: %s", fmt.Sprintf(s, i...))
+		}),
 	})
 }
 
@@ -36,7 +45,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	go consumeMessages(ctx, reader)
 
-	// listen for interrupt signal to gracefully shutdown the server
+	// listen for interrupt signal to gracefully shut down the server
 	receivedSig := <-chOsInterrupt
 	log.Printf("signal [%s] received, killing everything ...", receivedSig)
 	cancel()
@@ -62,12 +71,12 @@ func consumeMessages(ctx context.Context, reader *kafka.Reader) {
 			m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value),
 		)
 
-		log.Println("will close reader ...")
-		if err := reader.Close(); err != nil {
-			log.Fatalf("close reader: %s", err)
-		} else {
-			log.Println("reader closed")
-		}
+		//log.Println("will close reader ...")
+		//if err := reader.Close(); err != nil {
+		//	log.Fatalf("close reader: %s", err)
+		//} else {
+		//	log.Println("reader closed")
+		//}
 
 		log.Println("will commit offset ...")
 		err = reader.CommitMessages(ctx, m)
