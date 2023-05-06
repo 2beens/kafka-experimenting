@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -39,17 +38,17 @@ func main() {
 
 	// listen for interrupt signal to gracefully shutdown the server
 	receivedSig := <-chOsInterrupt
-	fmt.Printf("signal [%s] received, killing everything ...", receivedSig)
+	log.Printf("signal [%s] received, killing everything ...", receivedSig)
 	cancel()
 }
 
 func consumeMessages(ctx context.Context, reader *kafka.Reader) {
-	fmt.Println("start consuming ...")
+	log.Println("start consuming ...")
 	for {
 		// check context done
 		select {
 		case <-ctx.Done():
-			fmt.Println("closing consumer")
+			log.Println("closing consumer")
 			return
 		default:
 		}
@@ -58,18 +57,25 @@ func consumeMessages(ctx context.Context, reader *kafka.Reader) {
 		if err != nil {
 			log.Fatalf("fetch message: %s", err)
 		}
-		fmt.Printf(
+		log.Printf(
 			"message at topic:%v partition:%v offset:%v	%s = %s\n",
 			m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value),
 		)
 
-		fmt.Println("will commit offset ...")
+		log.Println("will close reader ...")
+		if err := reader.Close(); err != nil {
+			log.Fatalf("close reader: %s", err)
+		} else {
+			log.Println("reader closed")
+		}
+
+		log.Println("will commit offset ...")
 		err = reader.CommitMessages(ctx, m)
 		if err != nil {
 			log.Fatalf("commit message: %s", err)
 		}
-		fmt.Printf("offset %d committed\n", m.Offset)
+		log.Printf("offset %d committed\n", m.Offset)
 
-		fmt.Println()
+		log.Println()
 	}
 }

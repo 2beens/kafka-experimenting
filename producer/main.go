@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,7 +15,7 @@ import (
 )
 
 func main() {
-	fmt.Println("starting producer ...")
+	log.Println("starting producer ...")
 
 	kafkaURL := "localhost:9092"
 	topic := "gophers_part_num_1"
@@ -34,18 +35,18 @@ func main() {
 
 	// listen for interrupt signal to gracefully shutdown the server
 	receivedSig := <-chOsInterrupt
-	fmt.Printf("signal [%s] received, killing everything ...", receivedSig)
+	log.Printf("signal [%s] received, killing everything ...", receivedSig)
 	cancel()
 }
 
 func produceMessages(ctx context.Context, writer *kafka.Writer) {
-	fmt.Println("start producing")
+	log.Println("start producing")
 
 	for i := 0; ; i++ {
 		// check context done
 		select {
 		case <-ctx.Done():
-			fmt.Println("closing producer")
+			log.Println("closing producer")
 			return
 		default:
 		}
@@ -53,11 +54,11 @@ func produceMessages(ctx context.Context, writer *kafka.Writer) {
 		g := newGopher()
 		gopherJson, err := json.Marshal(g)
 		if err != nil {
-			fmt.Printf("marshal gopher: %s\n", err)
+			log.Printf("marshal gopher: %s\n", err)
 			continue
 		}
 
-		fmt.Printf("gopher: %s\n", gopherJson)
+		log.Printf("gopher: %s\n", gopherJson)
 
 		key := fmt.Sprintf("key-%d", i)
 		msg := kafka.Message{
@@ -68,9 +69,9 @@ func produceMessages(ctx context.Context, writer *kafka.Writer) {
 
 		err = writer.WriteMessages(ctx, msg)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		} else {
-			fmt.Println("--> produced", key)
+			log.Println("--> produced", key)
 		}
 
 		time.Sleep(1 * time.Second)
