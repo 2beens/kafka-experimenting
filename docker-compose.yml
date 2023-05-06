@@ -1,3 +1,5 @@
+#https://docs.confluent.io/platform/current/platform-quickstart.html#ce-docker-quickstart 
+
 ---
 version: '2'
 services:
