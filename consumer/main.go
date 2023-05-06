@@ -54,13 +54,22 @@ func consumeMessages(ctx context.Context, reader *kafka.Reader) {
 		default:
 		}
 
-		m, err := reader.ReadMessage(ctx)
+		m, err := reader.FetchMessage(ctx)
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatalf("fetch message: %s", err)
 		}
 		fmt.Printf(
 			"message at topic:%v partition:%v offset:%v	%s = %s\n",
 			m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value),
 		)
+
+		fmt.Println("will commit offset ...")
+		err = reader.CommitMessages(ctx, m)
+		if err != nil {
+			log.Fatalf("commit message: %s", err)
+		}
+		fmt.Printf("offset %d committed\n", m.Offset)
+
+		fmt.Println()
 	}
 }
