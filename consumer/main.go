@@ -32,7 +32,7 @@ func getKafkaReader(kafkaURL, topic, groupID string) *kafka.Reader {
 }
 
 func main() {
-	kafkaURL := "localhost:9092"
+	kafkaURL := "localhost:9093"
 	topic := "gophers_part_num_1"
 	groupID := "gophers_consumers_group_1"
 

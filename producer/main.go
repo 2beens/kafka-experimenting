@@ -17,7 +17,7 @@ import (
 func main() {
 	log.Println("starting producer ...")
 
-	kafkaURL := "localhost:9092"
+	kafkaURL := "localhost:9093"
 	topic := "gophers_part_num_1"
 
 	writer := &kafka.Writer{
